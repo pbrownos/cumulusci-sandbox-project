@@ -3,10 +3,7 @@ name: Salesforce CI Pipeline
 on:
   pull_request:
     branches:
-      - SIT
-  push:
-    branches:
-      - SIT
+      - release  # This triggers the action when a PR is opened against the release branch
 
 jobs:
   validate-deploy:
@@ -27,14 +24,24 @@ jobs:
       - name: Install CumulusCI
         run: |
           pip install cumulusci
-          
+
       - name: Debugging SF_USERNAME_SIT
         run: echo "SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}"
-        
+
+      - name: Set environment variables for SF login
+        env:
+          SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
+          SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
+
       - name: Authenticate with Salesforce Org (SIT)
         run: |
-          sf org login jwt --client-id ${{ secrets.SF_CONSUMER_KEY_SIT }} --jwt-key-file ${{ secrets.SF_JWT_KEY_SIT }} --username ${{ secrets.SF_USERNAME_SIT }}  --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com --set-default
-      
+          sf org login jwt --client-id $SF_CONSUMER_KEY_SIT \
+                           --jwt-key-file $SF_JWT_KEY_SIT \
+                           --username $SF_USERNAME_SIT \
+                           --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
+                           --set-default --loglevel debug
+
       - name: Import SIT Org into CumulusCI
         run: |
           cci org import --org sit --default
@@ -44,6 +51,12 @@ jobs:
       - name: Validate feature branch in SIT (Check Only)
         run: |
           cci flow run deploy --org sit --checkonly
+        env:
+          CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
+        
+      - name: Run Tests
+        run: |
+          cci task run run_tests --org sit
         env:
           CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
 
@@ -72,7 +85,11 @@ jobs:
 
       - name: Authenticate with Salesforce Org (SIT)
         run: |
-          sf org login jwt --client-id ${{ secrets.SF_CONSUMER_KEY_SIT }} --jwt-key-file ${{ secrets.SF_JWT_KEY_SIT }} --username ${{ secrets.SF_USERNAME_SIT }} --instance-url https://login.salesforce.com --set-default
+          sf org login jwt --client-id $SF_CONSUMER_KEY_SIT \
+                           --jwt-key-file $SF_JWT_KEY_SIT \
+                           --username $SF_USERNAME_SIT \
+                           --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
+                           --set-default --loglevel debug
 
       - name: Import SIT Org into CumulusCI
         run: |
@@ -86,3 +103,8 @@ jobs:
         env:
           CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
 
+      - name: Run Tests
+        run: |
+          cci task run run_tests --org sit
+        env:
+          CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
