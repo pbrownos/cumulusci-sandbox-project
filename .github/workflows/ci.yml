@@ -25,10 +25,6 @@ jobs:
         run: |
           pip install cumulusci
 
-      - name: Debug SF_USERNAME_SIT
-        run: |
-          echo "SF_USERNAME_SIT is ${{ secrets.SF_USERNAME_SIT }}"
-
       - name: Authenticate with Salesforce Org (SIT)
         env:
           SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
