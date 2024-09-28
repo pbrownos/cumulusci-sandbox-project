@@ -37,7 +37,7 @@ jobs:
           sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
                            --jwt-key-file /tmp/server.key \
                            --username "$SF_USERNAME_SIT" \
-                           --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
+                           --instance-url https://test.salesforce.com \
                            --set-default
 
       - name: Import SIT Org into CumulusCI
