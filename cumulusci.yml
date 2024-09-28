@@ -1,0 +1,25 @@
+minimum_cumulusci_version: '3.92.0'
+project:
+    name: cumulusci-sandbox-project
+    package:
+        name: cumulusci-sandbox-project
+        api_version: '61.0'
+    git:
+        default_branch: 'main'
+    source_format: sfdx
+
+tasks:
+    robot:
+        options:
+            suites: robot/cumulusci-sandbox-project/tests
+            options:
+                outputdir: robot/cumulusci-sandbox-project/results
+
+    robot_testdoc:
+        options:
+            path: robot/cumulusci-sandbox-project/tests
+            output: robot/cumulusci-sandbox-project/doc/cumulusci-sandbox-project_tests.html
+
+    run_tests:
+        options:
+            required_org_code_coverage_percent: 90
