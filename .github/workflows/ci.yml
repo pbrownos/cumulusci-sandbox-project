@@ -24,6 +24,7 @@ jobs:
       - name: Install CumulusCI
         run: |
           pip install cumulusci
+          pip install --upgrade pyopenssl
 
       - name: Create JWT Key File
         run: |
