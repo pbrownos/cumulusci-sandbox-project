@@ -32,7 +32,7 @@ jobs:
           SF_JWT_KEY: ${{ secrets.SF_JWT_KEY_SIT }}
         run: |
           echo "$SF_JWT_KEY" > server.key
-          cci org connect cciTestSIT --jwt -i $SF_CONSUMER_KEY -f server.key -u $SF_USERNAME
+          cci org connect cciTestSIT --jwt-key server.key --client-id $SF_CONSUMER_KEY --username $SF_USERNAME --login-url https://test.salesforce.com
           cci org default cciTestSIT
 
       - name: Run Dry-Run Deployment
