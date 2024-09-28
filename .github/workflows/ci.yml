@@ -28,14 +28,11 @@ jobs:
       - name: Debugging SF_USERNAME_SIT
         run: echo "SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}"
 
-      - name: Set environment variables for SF login
-        env:
+      - name: Authenticate with Salesforce Org (SIT)
+        env:  # The env section needs to be followed by a run block
           SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
           SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
           SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
-        run: echo "Environment variables set"
-
-      - name: Authenticate with Salesforce Org (SIT)
         run: |
           sf org login jwt --client-id $SF_CONSUMER_KEY_SIT \
                            --jwt-key-file $SF_JWT_KEY_SIT \
@@ -85,6 +82,10 @@ jobs:
           pip install cumulusci
 
       - name: Authenticate with Salesforce Org (SIT)
+        env:
+          SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
+          SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
         run: |
           sf org login jwt --client-id $SF_CONSUMER_KEY_SIT \
                            --jwt-key-file $SF_JWT_KEY_SIT \
