@@ -3,13 +3,12 @@ name: Salesforce CI Pipeline
 on:
   pull_request:
     branches:
-      - SIT  # Trigger the action when a PR is opened against the release branch
+      - SIT  # Trigger the action when a PR is opened against the SIT branch
 
 jobs:
   validate-deploy:
     name: Validate Deployment to SIT (PR Check)
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
@@ -31,9 +30,9 @@ jobs:
           SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
           SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
         run: |
-          sf org login jwt --client-id $SF_CONSUMER_KEY_SIT \
-                           --jwt-key-file $SF_JWT_KEY_SIT \
-                           --username $SF_USERNAME_SIT \
+          sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
+                           --jwt-key-file "$SF_JWT_KEY_SIT" \
+                           --username "$SF_USERNAME_SIT" \
                            --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
                            --set-default --loglevel debug
 
@@ -62,7 +61,6 @@ jobs:
   deploy-release:
     name: Deploy Release to SIT (After Merge)
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
 
     steps:
       - name: Checkout code
@@ -84,9 +82,9 @@ jobs:
           SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
           SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
         run: |
-          sf org login jwt --client-id $SF_CONSUMER_KEY_SIT \
-                           --jwt-key-file $SF_JWT_KEY_SIT \
-                           --username $SF_USERNAME_SIT \
+          sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
+                           --jwt-key-file "$SF_JWT_KEY_SIT" \
+                           --username "$SF_USERNAME_SIT" \
                            --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
                            --set-default --loglevel debug
 
