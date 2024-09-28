@@ -1,4 +1,4 @@
-name: CI
+name: Salesforce CI Pipeline
 
 on:
   pull_request:
@@ -9,75 +9,77 @@ on:
       - SIT
 
 jobs:
-  build_and_test:
-    name: Build and Test
+  validate-deploy:
+    name: Validate Deployment to SIT (PR Check)
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      - name: Install Salesforce CLI
+        run: |
+          curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt install -y nodejs
+          npm install -g @salesforce/cli
 
       - name: Install CumulusCI
-        run: pip install --upgrade cumulusci
-
-      - name: Configure Connected App Service
-        env:
-          CUMULUSCI_CONNECTED_APP_client_id: ${{ secrets.SF_CONSUMER_KEY_SIT }}
-          CUMULUSCI_CONNECTED_APP_jwt_key: ${{ secrets.SF_JWT_KEY_SIT }}
-        run: echo "Connected app service configured."
-
-      - name: Authenticate with Salesforce SIT Org
-        env:
-          SF_USERNAME: ${{ secrets.SF_USERNAME_SIT }}
         run: |
-          cci org remove SIT --no-prompt || echo "Org not previously connected."
-          cci org connect SIT --username $SF_USERNAME --org-type persistent
-          cci org default SIT
+          pip install cumulusci
 
-      - name: Run Dry-Run Deployment
-        run: cci flow run deploy --org SIT --dry-run
+      - name: Authenticate with Salesforce Org (SIT)
+        run: |
+          sf org login jwt --client-id ${{ secrets.SF_CONSUMER_KEY_SIT }} --jwt-key-file ${{ secrets.SF_JWT_KEY_SIT }} --username ${{ secrets.SF_USERNAME_SIT }} --instance-url https://login.salesforce.com --set-default
 
-      - name: Clean Up
-        run: cci org remove SIT --no-prompt
+      - name: Import SIT Org into CumulusCI
+        run: |
+          cci org import --org sit --default
+        env:
+          SFDX_AUTH_URL: $(sf org display --json | jq -r .result.sfdxAuthUrl)
 
-  deploy_to_SIT:
-    if: github.ref == 'refs/heads/SIT'
-    name: Deploy to SIT
+      - name: Validate feature branch in SIT (Check Only)
+        run: |
+          cci flow run deploy --org sit --checkonly
+        env:
+          CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
+
+      - name: Fail on Error
+        if: failure()
+        run: exit 1
+
+  deploy-release:
+    name: Deploy Release to SIT (After Merge)
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      - name: Install Salesforce CLI
+        run: |
+          curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt install -y nodejs
+          npm install -g @salesforce/cli
 
       - name: Install CumulusCI
-        run: pip install --upgrade cumulusci
-
-      - name: Configure Connected App Service
-        env:
-          CUMULUSCI_CONNECTED_APP_client_id: ${{ secrets.SF_CONSUMER_KEY_SIT }}
-          CUMULUSCI_CONNECTED_APP_jwt_key: ${{ secrets.SF_JWT_KEY_SIT }}
-        run: echo "Connected app service configured."
-
-      - name: Authenticate with Salesforce SIT Org
-        env:
-          SF_USERNAME: ${{ secrets.SF_USERNAME_SIT }}
         run: |
-          cci org remove SIT --no-prompt || echo "Org not previously connected."
-          cci org connect SIT --username $SF_USERNAME --org-type persistent
-          cci org default SIT
+          pip install cumulusci
 
-      - name: Deploy to SIT Environment
-        run: cci flow run deploy --org SIT
+      - name: Authenticate with Salesforce Org (SIT)
+        run: |
+          sf org login jwt --client-id ${{ secrets.SF_CONSUMER_KEY_SIT }} --jwt-key-file ${{ secrets.SF_JWT_KEY_SIT }} --username ${{ secrets.SF_USERNAME_SIT }} --instance-url https://login.salesforce.com --set-default
 
-      - name: Clean Up
-        run: cci org remove SIT --no-prompt
+      - name: Import SIT Org into CumulusCI
+        run: |
+          cci org import --org sit --default
+        env:
+          SFDX_AUTH_URL: $(sf org display --json | jq -r .result.sfdxAuthUrl)
+
+      - name: Deploy release branch to SIT
+        run: |
+          cci flow run deploy --org sit
+        env:
+          CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
+
