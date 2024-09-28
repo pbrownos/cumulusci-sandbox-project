@@ -1,0 +1,42 @@
+on:
+  pull_request:
+    branches:
+      - SIT
+  push:
+    branches:
+      - SIT
+
+jobs:
+  build:
+    # Existing build job for PRs
+  deploy_to_SIT:
+    if: github.ref == 'refs/heads/SIT'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install CumulusCI
+        run: pip install cumulusci
+
+      - name: Authenticate with Salesforce (SIT Environment)
+        env:
+          SF_CONSUMER_KEY: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME_SIT }}
+          SF_JWT_KEY: ${{ secrets.SF_JWT_KEY_SIT }}
+        run: |
+          echo "$SF_JWT_KEY" > server.key
+          cci org connect SIT --jwt -i $SF_CONSUMER_KEY_SIT -f server.key -u $SF_USERNAME_SIT
+          cci org default SIT
+
+      - name: Deploy to SIT Environment
+        run: cci flow run deploy --org SIT
+
+      - name: Clean Up
+        run: rm server.key

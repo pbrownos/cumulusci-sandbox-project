@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install CumulusCI
+        run: pip install cumulusci
+
+      - name: Authenticate Dev Hub
+        env:
+          SFDX_JSON: ${{ secrets.SFDX_JSON }}
+        run: |
+          echo "$SFDX_JSON" > sfdx.json
+          cci org import sfdx.json devhub
+          cci org default devhub
+
+      - name: Run Tests
+        run: cci flow run qa_org --org devhub
