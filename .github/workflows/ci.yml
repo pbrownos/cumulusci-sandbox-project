@@ -1,3 +1,5 @@
+name: CI
+
 on:
   pull_request:
     branches:
@@ -8,9 +10,40 @@ on:
 
 jobs:
   build:
-    # Existing build job for PRs
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install CumulusCI
+        run: pip install cumulusci
+
+      - name: Authenticate with Salesforce (CCI Test SIT)
+        env:
+          SF_CONSUMER_KEY: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME_SIT}}
+          SF_JWT_KEY: ${{ secrets.SF_JWT_KEY_SIT }}
+        run: |
+          echo "$SF_JWT_KEY" > server.key
+          cci org connect cciTestSIT --jwt -i $SF_CONSUMER_KEY -f server.key -u $SF_USERNAME
+          cci org default cciTestSIT
+
+      - name: Run Dry-Run Deployment
+        run: cci flow run deploy --org cciTestSIT --dry-run
+
+      - name: Clean Up
+        run: rm server.key
+
   deploy_to_SIT:
     if: github.ref == 'refs/heads/SIT'
+    name: Deploy to SIT
     runs-on: ubuntu-latest
 
     steps:
@@ -27,11 +60,11 @@ jobs:
 
       - name: Authenticate with Salesforce (SIT Environment)
         env:
-          SF_CONSUMER_KEY: ${{ secrets.SF_CONSUMER_KEY_SIT }}
-          SF_USERNAME: ${{ secrets.SF_USERNAME_SIT }}
-          SF_JWT_KEY: ${{ secrets.SF_JWT_KEY_SIT }}
+          SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
+          SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
         run: |
-          echo "$SF_JWT_KEY" > server.key
+          echo "$SF_JWT_KEY_SIT" > server.key
           cci org connect SIT --jwt -i $SF_CONSUMER_KEY_SIT -f server.key -u $SF_USERNAME_SIT
           cci org default SIT
 
