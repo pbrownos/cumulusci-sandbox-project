@@ -6,7 +6,7 @@ on:
       - SIT  # Trigger the action when a PR is opened against the SIT branch
 
 jobs:
-  validate-deploy:
+  SitValidate:
     name: Validate Deployment to SIT (PR Check)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
