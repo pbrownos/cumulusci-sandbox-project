@@ -3,7 +3,7 @@ name: Salesforce CI Pipeline
 on:
   pull_request:
     branches:
-      - release  # This triggers the action when a PR is opened against the release branch
+      - release  # Trigger the action when a PR is opened against the release branch
 
 jobs:
   validate-deploy:
@@ -25,11 +25,12 @@ jobs:
         run: |
           pip install cumulusci
 
-      - name: Debugging SF_USERNAME_SIT
-        run: echo "SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}"
+      - name: Debug SF_USERNAME_SIT
+        run: |
+          echo "SF_USERNAME_SIT is ${{ secrets.SF_USERNAME_SIT }}"
 
       - name: Authenticate with Salesforce Org (SIT)
-        env:  # The env section needs to be followed by a run block
+        env:
           SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
           SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
           SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
