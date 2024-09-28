@@ -27,7 +27,10 @@ jobs:
       - name: Install CumulusCI
         run: |
           pip install cumulusci
-
+          
+      - name: Debugging SF_USERNAME_SIT
+        run: echo "SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}"
+        
       - name: Authenticate with Salesforce Org (SIT)
         run: |
           sf org login jwt --client-id ${{ secrets.SF_CONSUMER_KEY_SIT }} --jwt-key-file ${{ secrets.SF_JWT_KEY_SIT }} --username ${{ secrets.SF_USERNAME_SIT }}  --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com --set-default
