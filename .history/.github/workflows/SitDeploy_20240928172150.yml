@@ -1,0 +1,53 @@
+name: Salesforce CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - SIT  # Trigger the action when a PR is opened against the SIT branch
+
+jobs:
+ deploy-release:
+    name: Deploy Release to SIT (After Merge)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Salesforce CLI
+        run: |
+          curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt install -y nodejs
+          npm install -g @salesforce/cli
+
+      - name: Install CumulusCI
+        run: |
+          pip install cumulusci
+
+      - name: Create JWT Key File
+        run: |
+          echo "${{ secrets.SF_JWT_KEY_SIT }}" > /tmp/server.key
+
+      - name: Authenticate with Salesforce Org (SIT)
+        env:
+          SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
+        run: |
+          sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
+                           --jwt-key-file /tmp/server.key \
+                           --username "$SF_USERNAME_SIT" \
+                           --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
+                           --set-default
+
+      - name: Import SIT Org into CumulusCI
+        run: |
+          cci org import --org sit --default
+        env:
+          SFDX_AUTH_URL: $(sf org display --json | jq -r .result.sfdxAuthUrl)
+
+      - name: Deploy release branch to SIT
+        run: |
+          cci flow run deploy --org sit
+        env:
+          CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}

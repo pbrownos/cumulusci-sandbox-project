@@ -23,8 +23,3 @@ tasks:
     run_tests:
         options:
             required_org_code_coverage_percent: 90
-
-services:
-  connected_app:
-    description: Connection to the Salesforce connected app for JWT authentication
-    class_path: cumulusci.core.config.ConnectedAppOAuthConfig
