@@ -43,7 +43,7 @@ jobs:
 
       - name: Import SIT Org into CumulusCI
         run: |
-          cci org import $SF_USERNAME_SIT sit
+          cci org import brownpau@grinnell.edu.ccitestsit sit
         env:
           SFDX_AUTH_URL: $(sf org display --json | jq -r .result.sfdxAuthUrl)
 
