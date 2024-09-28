@@ -49,7 +49,7 @@ jobs:
 
       - name: Validate feature branch in SIT (Check Only)
         run: |
-          cci flow run deploy --org sit --checkonly
+          cci task run dx_push --org sit --command "force:source:deploy -c --sourcepath force-app"
         env:
           CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
         
