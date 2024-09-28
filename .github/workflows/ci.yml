@@ -9,6 +9,7 @@ jobs:
   validate-deploy:
     name: Validate Deployment to SIT (PR Check)
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull'
 
     steps:
       - name: Checkout code
@@ -24,17 +25,20 @@ jobs:
         run: |
           pip install cumulusci
 
+      - name: Create JWT Key File
+        run: |
+          echo "${{ secrets.SF_JWT_KEY_SIT }}" > /tmp/server.key
+
       - name: Authenticate with Salesforce Org (SIT)
         env:
           SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
-          SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
           SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
         run: |
           sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
-                           --jwt-key-file "$SF_JWT_KEY_SIT" \
+                           --jwt-key-file /tmp/server.key \
                            --username "$SF_USERNAME_SIT" \
                            --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
-                           --set-default --loglevel debug
+                           --set-default
 
       - name: Import SIT Org into CumulusCI
         run: |
@@ -61,7 +65,8 @@ jobs:
   deploy-release:
     name: Deploy Release to SIT (After Merge)
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'push'
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -76,17 +81,20 @@ jobs:
         run: |
           pip install cumulusci
 
+      - name: Create JWT Key File
+        run: |
+          echo "${{ secrets.SF_JWT_KEY_SIT }}" > /tmp/server.key
+
       - name: Authenticate with Salesforce Org (SIT)
         env:
           SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
-          SF_JWT_KEY_SIT: ${{ secrets.SF_JWT_KEY_SIT }}
           SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
         run: |
           sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
-                           --jwt-key-file "$SF_JWT_KEY_SIT" \
+                           --jwt-key-file /tmp/server.key \
                            --username "$SF_USERNAME_SIT" \
                            --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
-                           --set-default --loglevel debug
+                           --set-default
 
       - name: Import SIT Org into CumulusCI
         run: |
