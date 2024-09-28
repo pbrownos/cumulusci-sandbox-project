@@ -26,7 +26,8 @@ jobs:
           pip install cumulusci
 
       - name: Debugging SF_USERNAME_SIT
-        run: echo "SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}"
+        run: |
+          echo "SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}"
 
       - name: Set environment variables for SF login
         env:
