@@ -3,7 +3,7 @@ name: Salesforce CI Pipeline
 on:
   pull_request:
     branches:
-      - release  # Trigger the action when a PR is opened against the release branch
+      - SIT  # Trigger the action when a PR is opened against the release branch
 
 jobs:
   validate-deploy:
