@@ -64,13 +64,13 @@ jobs:
 
       - name: Configure Connected App Service
         env:
-          CUMULUSCI_CONNECTED_APP_client_id: ${{ secrets.SF_CONSUMER_KEY_SIT }}
-          CUMULUSCI_CONNECTED_APP_jwt_key: ${{ secrets.SF_JWT_KEY_SIT }}
+          CUMULUSCI_CONNECTED_APP_client_id: ${{ secrets.SF_CONSUMER_KEY }}
+          CUMULUSCI_CONNECTED_APP_jwt_key: ${{ secrets.SF_JWT_KEY }}
         run: echo "Connected app service configured."
 
       - name: Authenticate with Salesforce SIT Org
         env:
-          SF_USERNAME: ${{ secrets.SF_USERNAME_SIT }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
         run: |
           cci org remove SIT --no-prompt || echo "Org not previously connected."
           cci org connect SIT --username $SF_USERNAME --org-type persistent
