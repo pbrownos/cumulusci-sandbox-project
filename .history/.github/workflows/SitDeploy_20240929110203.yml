@@ -1,0 +1,67 @@
+name: Salesforce CI Pipeline
+
+on:
+  push:
+    branches:
+      - SIT  # Trigger the action when a PR is opened against the SIT branch
+
+jobs:
+  deploy-release:
+    name: Deploy Release to SIT (After Merge)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Salesforce CLI
+        run: |
+          curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt install -y nodejs
+          npm install -g @salesforce/cli
+
+      - name: Install CumulusCI
+        run: |
+          pip install cumulusci
+          pip install --upgrade pyopenssl
+
+      - name: Create JWT Key File
+        run: |
+          echo "${{ secrets.SF_JWT_KEY_SIT }}" > /tmp/server.key
+
+      - name: Authenticate with Salesforce Org (SIT)
+        env:
+          SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
+        run: |
+          sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
+                           --jwt-key-file /tmp/server.key \
+                           --username "$SF_USERNAME_SIT" \
+                           --instance-url https://grinnell--ccitestsit.sandbox.my.salesforce.com \
+                           --set-default
+
+      - name: Import SIT Org into CumulusCI
+        run: |
+          cci org import brownpau@grinnell.edu.ccitestsit sit
+        env:
+          SFDX_AUTH_URL: $(sf org display --json | jq -r .result.sfdxAuthUrl)
+
+      - name: Deploy release branch to SIT
+        run: |
+          cci task run dx_push --org sit --command "force:source:deploy --sourcepath force-app"
+        env:
+          CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
+
+      - name: Set up CumulusCI GitHub service configuration
+        run: |
+          mkdir -p ~/.cumulusci
+          echo "services:" > ~/.cumulusci/cumulusci.yml
+          echo "  github:" >> ~/.cumulusci/cumulusci.yml
+          echo "    username: ${{ secrets.GH_USERNAME }}" >> ~/.cumulusci/cumulusci.yml
+          echo "    token: ${{ secrets.GH_PAT }}" >> ~/.cumulusci/cumulusci.yml
+          echo "    repo_url: https://github.com/${{ github.repository }}" >> ~/.cumulusci/cumulusci.yml
+
+      - name: Back Propagate to Feature Branches
+        run: |
+          cci flow run release_sit --org sit

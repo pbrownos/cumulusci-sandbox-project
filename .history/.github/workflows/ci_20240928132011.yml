@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - SIT
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install CumulusCI
+        run: pip install cumulusci
+
+      - name: Authenticate with Salesforce (CCI Test SIT)
+        env:
+          SF_CONSUMER_KEY: ${{ secrets.SF_CONSUMER_KEY }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_JWT_KEY: ${{ secrets.SF_JWT_KEY }}
+        run: |
+          echo "$SF_JWT_KEY" > server.key
+          cci org connect cciTestSIT --jwt -i $SF_CONSUMER_KEY -f server.key -u $SF_USERNAME
+          cci org default cciTestSIT
+
+      - name: Run Dry-Run Deployment
+        run: cci flow run deploy --org cciTestSIT --dry-run
+
+      - name: Clean Up
+        run: rm server.key
