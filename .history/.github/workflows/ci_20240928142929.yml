@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - SIT
+  push:
+    branches:
+      - SIT
+
+jobs:
+  build_and_test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install CumulusCI
+        run: pip install --upgrade cumulusci
+
+      - name: Configure Connected App Service
+        env:
+          CUMULUSCI_CONNECTED_APP_client_id: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          CUMULUSCI_CONNECTED_APP_jwt_key: ${{ secrets.SF_JWT_KEY_SIT }}
+        run: echo "Connected app service configured."
+
+      - name: Authenticate with Salesforce SIT Org
+        env:
+          SF_USERNAME: ${{ secrets.SF_USERNAME_SIT }}
+        run: |
+          cci org remove SIT --no-prompt || echo "Org not previously connected."
+          cci org connect SIT --username $SF_USERNAME --org-type persistent
+          cci org default SIT
+
+      - name: Run Dry-Run Deployment
+        run: cci flow run deploy --org SIT --dry-run
+
+      - name: Clean Up
+        run: cci org remove SIT --no-prompt
+
+  deploy_to_SIT:
+    if: github.ref == 'refs/heads/SIT'
+    name: Deploy to SIT
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install CumulusCI
+        run: pip install --upgrade cumulusci
+
+      - name: Configure Connected App Service
+        env:
+          CUMULUSCI_CONNECTED_APP_client_id: ${{ secrets.SF_CONSUMER_KEY }}
+          CUMULUSCI_CONNECTED_APP_jwt_key: ${{ secrets.SF_JWT_KEY }}
+        run: echo "Connected app service configured."
+
+      - name: Authenticate with Salesforce SIT Org
+        env:
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+        run: |
+          cci org remove SIT --no-prompt || echo "Org not previously connected."
+          cci org connect SIT --username $SF_USERNAME --org-type persistent
+          cci org default SIT
+
+      - name: Deploy to SIT Environment
+        run: cci flow run deploy --org SIT
+
+      - name: Clean Up
+        run: cci org remove SIT --no-prompt

@@ -28,13 +28,3 @@ services:
   connected_app:
     description: Connection to the Salesforce connected app for JWT authentication
     class_path: cumulusci.core.config.ConnectedAppOAuthConfig
-
-flows:
-  release_sit:
-    description: Deploy to SIT and auto-merge to feature branches
-    steps:
-      1:
-        task: github_automerge_main
-        options:
-          base_branch: SIT  # Change this to your base branch
-          feature_prefix: feature/  # Prefix for your feature branches
