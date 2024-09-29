@@ -62,4 +62,4 @@ jobs:
 
       - name: Back Propagate to Feature Branches
         run: |
-          cci flow run release_sit --org sit --debug
+          cci flow run release_sit --org sit
