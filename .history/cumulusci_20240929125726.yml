@@ -7,8 +7,6 @@ project:
     git:
         default_branch: 'main'
     source_format: sfdx
-    custom:
-        keychain_class: cumulusci.core.keychain.PlaintextProjectKeychain
 
 tasks:
     robot:
@@ -41,3 +39,8 @@ flows:
           source_branch: SIT  # Change this to your base branch
           branch_prefix: feature/  # Prefix for your feature branches
           create_pull_reqeust_on_conflict: true
+
+project:
+  custom:
+    keychain_class: cumulusci.core.keychain.PlaintextProjectKeychain
+          
