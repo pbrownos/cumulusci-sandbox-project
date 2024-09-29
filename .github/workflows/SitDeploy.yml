@@ -52,3 +52,7 @@ jobs:
           cci task run dx_push --org sit --command "force:source:deploy --sourcepath force-app"
         env:
           CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
+
+      - name: Back Propogate to Feature Branches
+        run: |
+          cci flow run release_sit
