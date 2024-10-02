@@ -1,0 +1,75 @@
+name: CCI Pipeline Validate to SIT
+
+on:
+  pull_request:
+    branches:
+      - SIT  # Trigger the action when a PR is opened against the SIT branch
+
+jobs:
+  SitValidate:
+    name: Validate Deployment to SIT (PR Check)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Salesforce CLI
+        run: |
+          curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt install -y nodejs
+          npm install -g @salesforce/cli
+
+      - name: Install CumulusCI
+        run: |
+          pip install cumulusci
+          pip install --upgrade pyopenssl
+
+      - name: Create JWT Key File
+        run: |
+          echo "${{ secrets.SF_JWT_KEY_SIT }}" > /tmp/server.key
+
+      - name: Authenticate with Salesforce Org (SIT)
+        env:
+          SF_CONSUMER_KEY_SIT: ${{ secrets.SF_CONSUMER_KEY_SIT }}
+          SF_USERNAME_SIT: ${{ secrets.SF_USERNAME_SIT }}
+        run: |
+          sf org login jwt --client-id "$SF_CONSUMER_KEY_SIT" \
+                           --jwt-key-file /tmp/server.key \
+                           --username "$SF_USERNAME_SIT" \
+                           --instance-url https://test.salesforce.com \
+                           --set-default
+
+      - name: Import SIT Org into CumulusCI
+        run: |
+          cci org import brownpau@grinnell.edu.ccitestsit sit
+        env:
+          SFDX_AUTH_URL: $(sf org display --json | jq -r .result.sfdxAuthUrl)
+
+      - name: Validate feature branch in SIT (Check Only)
+        run: |
+          cci task run dx_push --org sit --command "force:source:deploy -c --sourcepath force-app"
+        env:
+          CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget curl
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
+          rm google-chrome-stable_current_amd64.deb
+
+      - name: Set up ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
+
+      - name: Start Xvfb (for running browser tests)
+        run: |
+          export DISPLAY=:99
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+
+      - name: Run Robot Tests with Selenium
+        run: |
+          # Execute your Robot tests here
+          cci task run robot --org sit --path robot/cumulusci-sandbox-project/tests
