@@ -80,4 +80,4 @@ jobs:
         run: |
           Xvfb :99 &  # Start virtual display
           export DISPLAY=:99
-          robot --outputdir robot/cumulusci-sandbox-project/results/ robot/cumulusci-sandbox-project/tests/
+          robot --outputdir results/ robot_tests/
