@@ -1,1 +1,26 @@
-{"packageDirectories": [{"path": "force-app", "default": true}], "namespace": null, "sourceApiVersion": "61.0"}
+{
+  "packageDirectories": [
+    {
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "path": "force-app",
+      "default": true,
+      "package": "TestUnlockedPackage",
+      "versionDescription": "Test using CCI for package management."
+    }
+  ],
+  "namespace": null,
+  "sourceApiVersion": "61.0",
+  "packageAliases": {
+    "TestUnlockedPackage": "0HoNu00000001P7KAI",
+    "TestUnlockedPackage@0.1.0-1": "04tNu000000lQiDIAU",
+    "TestUnlockedPackage@0.1.0-2": "04tNu000000lS8vIAE",
+    "TestUnlockedPackage@0.1.0-3": "04tNu000000lSAXIA2",
+    "TestUnlockedPackage@0.1.0-4": "04tNu000000lSDlIAM",
+    "TestUnlockedPackage@0.1.0-5": "04tNu000000lSGzIAM",
+    "TestUnlockedPackage@0.1.0-6": "04tNu000000lSKDIA2",
+    "TestUnlockedPackage@0.1.0-7": "04tNu000000lSLpIAM",
+    "TestUnlockedPackage@0.1.0-8": "04tNu000000lSP3IAM",
+    "TestUnlockedPackage@0.1.0-9": "04tNu000000lSaLIAU"
+  }
+}

@@ -2,14 +2,13 @@ minimum_cumulusci_version: '3.92.0'
 project:
     name: cumulusci-sandbox-project
     package:
-        name: TestUnlockedPackage
+        name: TestUnlockedPackage  # Correct package name
         api_version: '61.0'
     git:
         default_branch: 'main'
     source_format: sfdx
     custom:
         keychain_class: cumulusci.core.keychain.PlaintextProjectKeychain
-        sandbox_name: CCITestQA  # Store the sandbox name here
 
 tasks:
     robot:
@@ -36,21 +35,19 @@ tasks:
         class_path: cumulusci.tasks.command.Command
         options:
             command: |
+                # Get the package version list and output to a JSON file
                 sf package version list -p TestUnlockedPackage --json > package_version.json
+                # Sort the versions by MajorVersion, MinorVersion, PatchVersion, and BuildNumber, then select the highest version
                 jq '.result | sort_by(.MajorVersion, .MinorVersion, .PatchVersion, .BuildNumber) | last' package_version.json > latest_version.json
-
+        
     install_package_version:
         class_path: cumulusci.tasks.command.Command
         options:
             command: |
+                # Extract the SubscriberPackageVersionId from the latest_version.json
                 VERSION_ID=$(jq -r '.SubscriberPackageVersionId' latest_version.json)
-                sf package install --wait 10 --package $VERSION_ID --target-org $project_config.project__custom__sandbox_name
-
-    cleanup_temp_files:
-        class_path: cumulusci.tasks.command.Command
-        options:
-            command: |
-                rm -f package_version.json latest_version.json
+                # Install the latest package version
+                sf package install --wait 10 --package $VERSION_ID --target-org CCITestQA
 
 services:
   connected_app:
@@ -58,6 +55,16 @@ services:
     class_path: cumulusci.core.config.ConnectedAppOAuthConfig
 
 flows:
+  release_sit:
+    description: Auto-merge SIT to feature branches
+    steps:
+      1:
+        task: github_automerge_main
+        options:
+          source_branch: SIT  # Change this to your base branch
+          branch_prefix: feature/  # Prefix for your feature branch
+          create_pull_reqeust_on_conflict: true
+
   release_to_sandbox:
     description: Create a new package version and deploy it to a sandbox
     steps:
@@ -67,5 +74,3 @@ flows:
         task: get_package_version
       3:
         task: install_package_version
-      4:
-        task: cleanup_temp_files
