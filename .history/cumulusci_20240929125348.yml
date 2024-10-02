@@ -1,0 +1,45 @@
+minimum_cumulusci_version: '3.92.0'
+project:
+    name: cumulusci-sandbox-project
+    package:
+        name: cumulusci-sandbox-project
+        api_version: '61.0'
+    git:
+        default_branch: 'main'
+    source_format: sfdx
+
+tasks:
+    robot:
+        options:
+            suites: robot/cumulusci-sandbox-project/tests
+            options:
+                outputdir: robot/cumulusci-sandbox-project/results
+
+    robot_testdoc:
+        options:
+            path: robot/cumulusci-sandbox-project/tests
+            output: robot/cumulusci-sandbox-project/doc/cumulusci-sandbox-project_tests.html
+
+    run_tests:
+        options:
+            required_org_code_coverage_percent: 90
+
+services:
+  connected_app:
+    description: Connection to the Salesforce connected app for JWT authentication
+    class_path: cumulusci.core.config.ConnectedAppOAuthConfig
+
+flows:
+  release_sit:
+    description: Auto-merge SIT to feature branches
+    steps:
+      1:
+        task: github_automerge_main
+        options:
+          source_branch: SIT  # Change this to your base branch
+          branch_prefix: feature/  # Prefix for your feature branches
+          create_pull_reqeust_on_conflict: true
+
+keychain:
+  class_path: cumulusci.core.keychain.PlaintextProjectKeychain
+          

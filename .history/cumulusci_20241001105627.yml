@@ -1,0 +1,60 @@
+minimum_cumulusci_version: '3.92.0'
+project:
+    name: cumulusci-sandbox-project
+    package:
+        name: TestUnlockedPackage  # Correct package name
+        api_version: '61.0'
+    git:
+        default_branch: 'main'
+    source_format: sfdx
+    custom:
+        keychain_class: cumulusci.core.keychain.PlaintextProjectKeychain
+
+tasks:
+    robot:
+        options:
+            suites: robot/cumulusci-sandbox-project/tests
+            options:
+                outputdir: robot/cumulusci-sandbox-project/results
+
+    robot_testdoc:
+        options:
+            path: robot/cumulusci-sandbox-project/tests
+            output: robot/cumulusci-sandbox-project/doc/cumulusci-sandbox-project_tests.html
+
+    run_tests:
+        options:
+            required_org_code_coverage_percent: 90
+
+services:
+  connected_app:
+    description: Connection to the Salesforce connected app for JWT authentication
+    class_path: cumulusci.core.config.ConnectedAppOAuthConfig
+
+flows:
+  release_sit:
+    description: Auto-merge SIT to feature branches
+    steps:
+      1:
+        task: github_automerge_main
+        options:
+          source_branch: SIT  # Change this to your base branch
+          branch_prefix: feature/  # Prefix for your feature branch
+          create_pull_reqeust_on_conflict: true
+
+  release_to_sandbox:
+    description: Create a new package version and deploy it to a sandbox
+    steps:
+      1:
+        task: create_package_version
+        options:
+          org: DailyWork
+          package_type: Unlocked
+      2:
+        shell:
+          command: sf package version list --package cumulusci-sandbox-project > package_version.txt
+      3:
+        shell:
+          command: |
+            VERSION_ID=$(grep -o '04t[0-9A-Za-z]\{15,18\}' package_version.txt)
+            sf package install --wait 10 --package $VERSION_ID --target-org CCITestQA

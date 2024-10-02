@@ -1,16 +1,16 @@
-name: CCI Pipeline Validate to SIT
+name: CCI Pipline Deploy to SIT
 
 on:
-  pull_request:
+  push:
     branches:
       - SIT  # Trigger the action when a PR is opened against the SIT branch
 
 jobs:
-  SitValidate:
-    name: Validate Deployment to SIT (PR Check)
+  deploy-release:
+    name: Deploy Release to SIT (After Merge)
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
+    if: github.event_name == 'push'
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -47,12 +47,23 @@ jobs:
         env:
           SFDX_AUTH_URL: $(sf org display --json | jq -r .result.sfdxAuthUrl)
 
-      - name: Validate feature branch in SIT (Check Only)
+      - name: Deploy release branch to SIT
         run: |
-          cci task run dx_push --org sit --command "force:source:deploy -c --sourcepath force-app"
+          cci task run dx_push --org sit --command "force:source:deploy --sourcepath force-app"
         env:
           CUMULUSCI_KEY: ${{ secrets.CUMULUSCI_KEY }}
 
-      - name: Fail on Error
-        if: failure()
-        run: exit 1
+      - name: Set up GitHub service in CumulusCI
+        run: |
+          cci service connect github --username "${{ secrets.GH_USERNAME }}" \
+                               --email "${{ secrets.GH_EMAIL }}" \
+                               --token "${{ secrets.GH_PAT }}" \
+                               --default
+
+      - name: Verify GitHub Service Connection
+        run: |
+          cci service info github
+      
+      - name: Back Propagate to Feature Branches
+        run: |
+          cci task run github_automerge_main --source_branch SIT --branch_prefix feature/
